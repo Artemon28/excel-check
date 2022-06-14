@@ -1,0 +1,28 @@
+section.name=res:net.dlg.header
+section.desc=res:net.dlg.desc
+
+items=host, user , password
+
+item.host.name= res:form.host.name
+item.host.key= database.host
+item.host.desc=res:form.host.desc
+item.host.ctype=atom
+item.host.dtype=string
+
+item.user.name=res:form.user.name
+item.user.key=database.user
+item.user.desc=res:form.user.desc
+item.user.ctype=atom
+item.user.dtype=string
+
+item.password.name=res:form.password.name
+item.password.key=database.password
+item.password.desc=res:form.password.desc
+item.password.ctype=atom
+item.password.dtype=string
+
+forms=form1
+
+#a form having no name is ok, but there won't be a form header in the Properties Editor.
+form.form1.name=
+form.form1.items=host,user,password

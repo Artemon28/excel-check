@@ -1,0 +1,14 @@
+locator.root=
+#reference to a localized file without its .properties extension
+resources=editorMessages
+
+sections=a
+
+section.a.name=res:section.database.name
+section.a.icon=copy.png
+section.a.descriptor=database.desc
+section.a.config=database.config
+section.a.defconfig= 
+section.a.type=props
+section.a.editor=kvp
+section.a.parent=

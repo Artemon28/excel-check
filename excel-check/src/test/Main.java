@@ -1,10 +1,19 @@
 package test;
 
+import FileHandler.FileImportGUI;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.swing.JPanel;
@@ -14,11 +23,8 @@ import com.plealog.genericapp.api.EZApplicationBranding;
 import com.plealog.genericapp.api.EZEnvironment;
 import com.plealog.genericapp.api.EZGenericApplication;
 import com.plealog.genericapp.api.EZSplashScreen;
-import com.plealog.genericapp.api.EZSplashScreenFactory;
 import com.plealog.genericapp.api.EZUIStarterListener;
-import com.plealog.genericapp.api.file.EZFileManager;
 import com.plealog.genericapp.api.file.EZFileUtils;
-import com.plealog.genericapp.api.log.EZLogger;
 
 public class Main {
   public static void main(String[] args) {
@@ -32,8 +38,6 @@ public class Main {
     //package as the resources)
     
     EZEnvironment.addResourceLocator(Main.class);
-    
-    String cl = Main.class.getPackage().getName();
 
     //we load are ResourceBundle containing the main menu declarations
     ResourceBundle rb = ResourceBundle.getBundle(Main.class.getPackage().getName()+".menu"); 
@@ -46,12 +50,17 @@ public class Main {
     EZEnvironment.setUIStarterListener(new MyStarterListener());
 
     //We setup the Preferences Dialogue Box
-    String confPath = EZFileUtils.terminatePath(System.getProperty("user.dir"));
-    confPath += "conf";
-    confPath += File.separator;
-    confPath += "editor.desc";
-    EZEnvironment.setPreferencesConfigurationFile(confPath);
-
+    String confPath;
+	try {
+		confPath = EZFileUtils.terminatePath(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent());
+		confPath += "conf";
+	    confPath += File.separator;
+	    confPath += "editor.desc";
+	    EZEnvironment.displayWarnMessage(EZEnvironment.getParentFrame(), confPath);
+	    EZEnvironment.setPreferencesConfigurationFile(confPath);
+	} catch (URISyntaxException e) {
+		e.printStackTrace();
+	}
     //Start the application
     EZGenericApplication.startApplication(args);
   }
@@ -90,27 +99,45 @@ public class Main {
 
     @Override
     public void preStart() {
+    	Properties prop = new Properties();
+    	Path fileName = Paths.get(EZEnvironment.getPreferencesConfigurationFile());
+    	try (FileInputStream fis = new FileInputStream(EZEnvironment.getPreferencesConfigurationFile())) {
+    	    prop.load(fis);
+    	    String passwordFile = prop.getProperty("section.a.config");
+    	    Properties ppp = new Properties();
+	    	ppp.load(new FileInputStream(fileName.getParent().toString() + File.separator + passwordFile));
+	    	String password = ppp.getProperty("database.password");
+	    	String database = ppp.getProperty("database.host");
+	    	
+    	    while (password == null || password.isEmpty() || database == null || database.isEmpty()) {
+    	    	EZEnvironment.getActionsManager().getDefaultActionHandler().handlePreferences();
+    	    	Properties props = new Properties();
+    	    	props.load(new FileInputStream(new File(fileName.getParent().toString() + "\\" + passwordFile)));
+    	    	password = props.getProperty("database.password");
+    	    	database = props.getProperty("database.host");
+    	    	if (password == null || password.isEmpty() || database == null || database.isEmpty()) {
+    	    		EZEnvironment.displayWarnMessage(EZEnvironment.getParentFrame(), "Please, enter database host and password");
+    	    	}
+    	    }
+    	} catch (FileNotFoundException ex) {
+    		ex.printStackTrace();
+    	} catch (IOException ex) {
+    		ex.printStackTrace();
+    	}
     }
     @Override
     public void frameDisplayed() {
     }
   }
-  /*
-   * Show how to work with generic action (see ui.properties for the definition of ActionFileOpen)*/
   private static class MyActionManager implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-      if (event.getPropertyName().equals("FileOpen")){
-        File f;
-
-        f = EZFileManager.chooseDirectory();
-        if (f!=null)
-          EZLogger.info("Chosen file is: "+f.getAbsolutePath());
+      if (event.getPropertyName().equals("FileImport")){
+  		FileImportGUI fileImportGUI = new FileImportGUI();
+  		fileImportGUI.dispose();
+  		fileImportGUI.revalidate();
       }
-      //The framework provides default behavior for Exit, About and Preferences.
-      //Override them by using your own dedicated code if default behavior does not
-      //meet your needs.
       else if (event.getPropertyName().equals("ExitApp")){
         EZEnvironment.getActionsManager().getDefaultActionHandler().handleExit();
       }

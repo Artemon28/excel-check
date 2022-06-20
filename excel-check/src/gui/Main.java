@@ -1,4 +1,4 @@
-package test;
+package gui;
 
 import FileHandler.FileImportGUI;
 
@@ -6,15 +6,24 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.CodeSource;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -33,35 +42,23 @@ public class Main {
     EZApplicationBranding.setAppName("Excel checking");
     EZApplicationBranding.setAppVersion("1.0");
     EZApplicationBranding.setProviderName("Chaykov Artemiy");
-
-    //We tell JRE where to locate resources... (always use a class located in the same
-    //package as the resources)
     
     EZEnvironment.addResourceLocator(Main.class);
-
-    //we load are ResourceBundle containing the main menu declarations
     ResourceBundle rb = ResourceBundle.getBundle(Main.class.getPackage().getName()+".menu"); 
     EZEnvironment.setUserDefinedActionsResourceBundle(rb);
-
-    //install the action manager listener to easily handle actions
     EZEnvironment.getActionsManager().addActionMenuListener(new MyActionManager());
-
-    //Add a listener to application startup cycle (see below)
     EZEnvironment.setUIStarterListener(new MyStarterListener());
-
-    //We setup the Preferences Dialogue Box
+    
     String confPath;
-	try {
+    try {
 		confPath = EZFileUtils.terminatePath(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent());
 		confPath += "conf";
 	    confPath += File.separator;
 	    confPath += "editor.desc";
-	    EZEnvironment.displayWarnMessage(EZEnvironment.getParentFrame(), confPath);
 	    EZEnvironment.setPreferencesConfigurationFile(confPath);
 	} catch (URISyntaxException e) {
 		e.printStackTrace();
 	}
-    //Start the application
     EZGenericApplication.startApplication(args);
   }
 
@@ -69,8 +66,6 @@ public class Main {
     private EZSplashScreen splash;
     @Override
     public Component getApplicationComponent() {
-      //This method is called by the framework to obtain the UI main component to be
-      //displayed in the main frame.
 
       JPanel      mainPanel = new JPanel(new BorderLayout());
       JTabbedPane tabPanel = new JTabbedPane();
@@ -83,14 +78,39 @@ public class Main {
 
     @Override
     public boolean isAboutToQuit() {
-      //You can add some code to figure out if application can exit.
-
-      //Return false to prevent application from exiting (e.g. a background task is still running).
-      //Return true otherwise.
-
-      //Do not add a Quit dialogue box to ask user confirmation: the framework already does that
-      //for you.
-      return true;
+    	String packageName = this.getClass().getPackage().getName();
+    	File sourceFolder = new File(EZEnvironment.getPreferencesConfigurationFile());
+		String packageName2 = sourceFolder.getParent();
+    	Properties prop1 = new Properties();
+    	Properties prop4 = new Properties();
+    	InputStream fis1 = null;
+    	InputStream fis4 = null;
+    	fis1 = this.getClass().getClassLoader().getResourceAsStream(packageName + "/conf/editor.desc");
+    	
+    	try {
+    		fis4 = new FileInputStream(EZEnvironment.getPreferencesConfigurationFile());
+			prop4.load(fis4);
+			String passwordFile = prop4.getProperty("section.a.config");
+		    Properties ppp4 = new Properties();
+		    InputStream fis3 = new FileInputStream(packageName2 + "\\" + passwordFile);
+		    ppp4.load(fis3);
+	    	String password = ppp4.getProperty("database.password");
+	    	String database = ppp4.getProperty("database.host");
+	    	String user = ppp4.getProperty("database.user");
+	    	
+	    	prop1.load(fis1);
+			String passwordFile4 = prop1.getProperty("section.a.config");
+		    Properties ppp1 = new Properties();
+		    InputStream fis2 = this.getClass().getClassLoader().getResourceAsStream(packageName + "/conf/" + passwordFile4);
+		    ppp1.load(fis2);
+	    	ppp1.setProperty("database.password", password);
+	    	ppp1.setProperty("database.host", database);
+	    	ppp1.setProperty("database.user", user);
+		} catch (Exception e) {
+			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), e.toString());
+			return true;
+		}
+    	return true;
     }
 
     @Override
@@ -99,30 +119,73 @@ public class Main {
 
     @Override
     public void preStart() {
-    	Properties prop = new Properties();
-    	Path fileName = Paths.get(EZEnvironment.getPreferencesConfigurationFile());
-    	try (FileInputStream fis = new FileInputStream(EZEnvironment.getPreferencesConfigurationFile())) {
-    	    prop.load(fis);
+    	InputStream fis4 = null;
+
+    	fis4 = this.getClass().getClassLoader().getResourceAsStream(EZEnvironment.getPreferencesConfigurationFile());
+    	
+		File sourceFolder = new File(EZEnvironment.getPreferencesConfigurationFile());
+		
+		File tSourceFolder = new File(sourceFolder.getParent());
+		if (!tSourceFolder.exists()) {
+			tSourceFolder.mkdir();
+		}
+		
+		String targetSsourceFolder = sourceFolder.getParent();
+    	Path destDir = Paths.get(targetSsourceFolder);
+    	if (fis4 == null) {   		
+    		CodeSource src = this.getClass().getProtectionDomain().getCodeSource();
+    		if (src != null) {
+				URL jar = src.getLocation();
+				ZipInputStream zip;
+				try {
+					zip = new ZipInputStream(jar.openStream());
+					while(true) {
+		    		    ZipEntry e = zip.getNextEntry();
+		    		    if (e == null)
+		    		      break;		    		    
+		    		    String name = e.getName();
+		    		    if (name.startsWith("gui/conf/")) {
+		    		    	File file = new File(name);
+		    		    	if (name.endsWith(".config") && (new File(destDir.resolve(file.getName()).toString()).exists()))
+		    		    		continue;
+		    		    	if (!name.equals("gui/conf/")) {
+		    		    		Files.copy(this.getClass().getClassLoader().getResourceAsStream(file.toPath().toString().replace('\\', '/')), destDir.resolve(file.getName().replace('\\', '/')), StandardCopyOption.REPLACE_EXISTING);
+		    		    	}
+		    		    }
+		    		  }
+				} catch (Exception e1) {
+					EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), e1.toString());
+				}
+    		} 
+    		else {
+    			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "Wrong url with src");
+    		}
+    	}
+    	Properties prop = new Properties();	
+    	try {
+    		fis4 = new FileInputStream(EZEnvironment.getPreferencesConfigurationFile());
+    	    prop.load(fis4);
     	    String passwordFile = prop.getProperty("section.a.config");
     	    Properties ppp = new Properties();
-	    	ppp.load(new FileInputStream(fileName.getParent().toString() + File.separator + passwordFile));
+    	    InputStream fis2 = new FileInputStream(sourceFolder.getParent() + File.separator + passwordFile);
+    	    ppp.load(fis2);
 	    	String password = ppp.getProperty("database.password");
 	    	String database = ppp.getProperty("database.host");
 	    	
     	    while (password == null || password.isEmpty() || database == null || database.isEmpty()) {
     	    	EZEnvironment.getActionsManager().getDefaultActionHandler().handlePreferences();
     	    	Properties props = new Properties();
-    	    	props.load(new FileInputStream(new File(fileName.getParent().toString() + "\\" + passwordFile)));
+    	    	InputStream fis3 = new FileInputStream(sourceFolder.getParent() + File.separator + passwordFile);
+    	    	props.load(fis3);
     	    	password = props.getProperty("database.password");
     	    	database = props.getProperty("database.host");
     	    	if (password == null || password.isEmpty() || database == null || database.isEmpty()) {
     	    		EZEnvironment.displayWarnMessage(EZEnvironment.getParentFrame(), "Please, enter database host and password");
     	    	}
     	    }
-    	} catch (FileNotFoundException ex) {
+    	} catch (Exception ex) {
     		ex.printStackTrace();
-    	} catch (IOException ex) {
-    		ex.printStackTrace();
+    		EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), ex.getMessage());
     	}
     }
     @Override

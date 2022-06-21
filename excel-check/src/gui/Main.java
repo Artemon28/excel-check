@@ -1,5 +1,8 @@
 package gui;
 
+import FileHandler.DefectReader;
+import FileHandler.DowntimesReader;
+import FileHandler.ExcelReader;
 import FileHandler.FileImportGUI;
 
 import java.awt.BorderLayout;
@@ -196,10 +199,29 @@ public class Main {
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
+    	
       if (event.getPropertyName().equals("FileImport")){
   		FileImportGUI fileImportGUI = new FileImportGUI();
   		fileImportGUI.dispose();
   		fileImportGUI.revalidate();
+      }
+      else if (event.getPropertyName().equals("Defect")) {
+    	  FileImportGUI fileImportGUI = new FileImportGUI();
+    	  ExcelReader excelReader = new DefectReader(fileImportGUI.getFileName());
+    	  try {
+			excelReader.read();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+      }
+      else if (event.getPropertyName().equals("Downtimes")) {
+    	  FileImportGUI fileImportGUI = new FileImportGUI();
+    	  ExcelReader excelReader = new DowntimesReader(fileImportGUI.getFileName());
+    	  try {
+			excelReader.read();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
       }
       else if (event.getPropertyName().equals("ExitApp")){
         EZEnvironment.getActionsManager().getDefaultActionHandler().handleExit();

@@ -9,14 +9,12 @@ import com.plealog.genericapp.api.file.EZFileManager;
 import com.plealog.genericapp.api.log.EZLogger;
 
 public class FileImportGUI extends JFrame{
-	
+	File f;
 	public FileImportGUI() {
-		File f;
-
         f = EZFileManager.chooseFileForOpenAction(null, new EZFileFilter("xlsx", "Excel file"));
-        
-        if (f != null){
-        	  EZLogger.info("Chosen file is: " + f.getAbsolutePath());
-        	}
+	}
+	
+	public String getFileName() {
+		return f.getPath();
 	}
 }

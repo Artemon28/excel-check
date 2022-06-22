@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class>  
+    <column>  
+        <name>AZKLASSE1</name>
+        <type>LatinKey</type>
+    </column>  
+      
+    <column>  
+        <name>Description</name>
+        <type>String</type>
+    </column>
+      
+    <column>  
+        <name>Код ТМК</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>FEKLASSE2</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>FEKLASSE3</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>LINETIMECLASS1</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>LINETIMECLASS2</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>LINETIMECLASS3</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>LINETIMECLASS4</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>LINETIMECLASS5</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>LINETIMECLASS6</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>DelayReasonCode</name>
+        <type>Number</type>
+    </column>
+    
+    <column>  
+        <name>GuiltyUnitCode</name>
+        <type>String</type>
+    </column> 
+   
+</class>  

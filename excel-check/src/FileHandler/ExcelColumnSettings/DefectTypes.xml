@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class>  
+    <column>  
+        <name>Auspraegung</name>
+        <type>LatinKey</type>
+    </column>  
+      
+    <column>  
+        <name>LngCode</name>
+        <type>LatinKey</type>
+    </column>
+      
+    <column>  
+        <name>Beschreibung</name>
+        <type>String</type>
+    </column>
+    
+    <column>  
+        <name>DisplayText</name>
+        <type>String</type>
+    </column>
+    
+    <column>  
+        <name>FehlerTyp</name>
+        <type>String</type>
+    </column>
+    
+    <column>  
+        <name>KZZulNachArbeit</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>KZZulAbWert</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>KZZulSchrott</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>KZZulEntsperr</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>KZSperrt</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>KZAutoSettle</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>FlagIsRestricted</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>FehlerVerursacher</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>DefectClass</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>  
+        <name>Description</name>
+        <type>String</type>
+    </column>
+    
+    <column>  
+        <name>DefectPosition</name>
+        <type>LatinKey</type>
+    </column>
+    
+    <column>
+    	<name>DefectType</name>
+    	<type>String</type>
+    </column>
+</class>  

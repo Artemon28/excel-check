@@ -25,6 +25,6 @@ public interface CellCheck {
 	        if (Character.UnicodeBlock.of(str.charAt(i)).equals(Character.UnicodeBlock.CYRILLIC))
 	            return false;
 	    }
-		return false;
+		return true;
 	}
 }

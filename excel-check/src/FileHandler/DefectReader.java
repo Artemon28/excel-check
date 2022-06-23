@@ -33,30 +33,33 @@ import FileHandler.CellCheck.StringCellCheck;
 public class DefectReader implements ExcelReader {
 	private File excelFile;
 	private HashMap<String, String> columnMap = new HashMap<>();
-	private String columnSettingsPath = "src/FileHandler/ExcelColumnSettings/DefectTypes.xml";
+	private String columnSettingsPath = "ExcelColumnSettings/DefectTypes.xml";
 	
 	public DefectReader(String fileName){
 		excelFile = new File(fileName);
+		readColumnSettings(this.getClass().getResource("").getPath() + columnSettingsPath);
+	}
+	
+	private void readColumnSettings(String path) {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-	      try {
-	          dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-	          DocumentBuilder db = dbf.newDocumentBuilder();
-	          Document doc = db.parse(new File(columnSettingsPath));
-	          doc.getDocumentElement().normalize();
-	          NodeList list = doc.getDocumentElement().getChildNodes();
-	          for (int temp = 0; temp < list.getLength(); temp++) {
-	              Node node = list.item(temp);
-	              if (node.getNodeType() == Node.ELEMENT_NODE) {
-	                  Element element = (Element) node;
-	                  String name = element.getElementsByTagName("name").item(0).getTextContent();
-	                  String type = element.getElementsByTagName("type").item(0).getTextContent();
-	                  columnMap.put(name, type);
-	              }
-	          }
-	      } catch (ParserConfigurationException | SAXException | IOException e) {
-	          e.printStackTrace();
-	      }
-
+		try {
+			dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(new File(path));
+			doc.getDocumentElement().normalize();
+			NodeList list = doc.getDocumentElement().getChildNodes();
+			for (int temp = 0; temp < list.getLength(); temp++) {
+				Node node = list.item(temp);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {			
+		            Element element = (Element) node;
+		            String name = element.getElementsByTagName("name").item(0).getTextContent();
+		            String type = element.getElementsByTagName("type").item(0).getTextContent();
+		            columnMap.put(name, type);
+		        }
+			}
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+		    e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -64,20 +67,23 @@ public class DefectReader implements ExcelReader {
 		
 		FileInputStream file = new FileInputStream(excelFile);
 		Workbook workbook = new XSSFWorkbook(file);
-		EZEnvironment.displayInfoMessage(EZEnvironment.getParentFrame(), "yes");
 		for (int k = 1; k < workbook.getNumberOfSheets(); k++) {
 			Sheet sheet = workbook.getSheetAt(k);
 			HashMap<Integer, String> blueColumns = new HashMap<>();
 			Row headRow = sheet.getRow(0);
 			if (headRow == null)
 				continue;
+			
 			for (Cell cell : headRow) {
 				CellStyle headStyle = cell.getCellStyle();
+				String blueColor = "org.apache.poi.xssf.usermodel.XSSFColor@c6292f46";
 				if (headStyle.getFillForegroundColorColor() == null)
 					break;
-				if (headStyle.getFillForegroundColorColor().toString().equals("org.apache.poi.xssf.usermodel.XSSFColor@c6292f46"))
-					blueColumns.put(cell.getColumnIndex(), getColumnName(cell.getRichStringCellValue().getString()));
+				if (headStyle.getFillForegroundColorColor().toString().equals(blueColor))
+					blueColumns.put(cell.getColumnIndex(), 
+							getColumnName(cell.getRichStringCellValue().getString().replaceAll("\\s+","")));
 			}
+			
 			for (Row row : sheet) {
 				if (row.getRowNum() == 0)
 					continue;
@@ -90,9 +96,6 @@ public class DefectReader implements ExcelReader {
 					switch (cell.getCellType()) {
 		            case STRING:
 		            	CellCheck check;
-		            	System.out.println(cell.getColumnIndex());
-	            		System.out.println(blueColumns.get(cell.getColumnIndex()));
-	            		System.out.println(columnMap.get(blueColumns.get(cell.getColumnIndex())));
 	            		if (!columnMap.containsKey(blueColumns.get(cell.getColumnIndex()))) {
 	            			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "no such column like: " +
 	            		blueColumns.get(cell.getColumnIndex()) +
@@ -101,7 +104,6 @@ public class DefectReader implements ExcelReader {
 	            		}
 	            		
 		            	if (columnMap.get(blueColumns.get(cell.getColumnIndex())).equals("LatinKey")) {
-		            		
 		            		check = new LatinStringCheck();
 		            	}
 		            		
@@ -123,9 +125,14 @@ public class DefectReader implements ExcelReader {
 		            	break;
 		            case BOOLEAN:
 		            	cell.getBooleanCellValue();
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type BOOLEAN");
 		            	break;
 		            case FORMULA:
 		            	cell.getCellFormula();
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type FORMULA");
+		            	break;
+		            default:
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type");
 		            	break;
 					}
 				}

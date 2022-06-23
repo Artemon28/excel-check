@@ -1,6 +1,8 @@
 package gui;
 
 import FileHandler.DefectReader;
+
+
 import FileHandler.DowntimesReader;
 import FileHandler.ExcelReader;
 import FileHandler.FileImportGUI;
@@ -40,6 +42,7 @@ import com.plealog.genericapp.api.file.EZFileUtils;
 
 public class Main {
   public static void main(String[] args) {
+	System.out.println("yes");
     EZGenericApplication.initialize("Excel checking");
 
     EZApplicationBranding.setAppName("Excel checking");

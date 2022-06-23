@@ -33,30 +33,35 @@ import FileHandler.CellCheck.StringCellCheck;
 public class DowntimesReader implements ExcelReader {
 	private File excelFile;
 	private HashMap<String, String> columnMap = new HashMap<>();
-	private String columnSettingsPath = "src/FileHandler/ExcelColumnSettings/DowntimesTypes.xml";
+	private String columnSettingsPath = "ExcelColumnSettings/DowntimesTypes.xml";
 	
 	public DowntimesReader(String fileName){
 		excelFile = new File(fileName);
+		readColumnSettings(this.getClass().getResource("").getPath() + columnSettingsPath);
+	}
+	/*
+	 * mvn install:install-file -Dfile=C:\Users\los28\git\excel-check\excel-check\libs\jgaf-2.4.1.jar -DgroupId=com.sample -DartifactId=jgaf -Dversion=2.4.1 -Dpackaging=jar
+	 */
+	private void readColumnSettings(String path) {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-	      try {
-	          dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-	          DocumentBuilder db = dbf.newDocumentBuilder();
-	          Document doc = db.parse(new File(columnSettingsPath));
-	          doc.getDocumentElement().normalize();
-	          NodeList list = doc.getDocumentElement().getChildNodes();
-	          for (int temp = 0; temp < list.getLength(); temp++) {
-	              Node node = list.item(temp);
-	              if (node.getNodeType() == Node.ELEMENT_NODE) {
-	                  Element element = (Element) node;
-	                  String name = element.getElementsByTagName("name").item(0).getTextContent();
-	                  String type = element.getElementsByTagName("type").item(0).getTextContent();
-	                  columnMap.put(name, type);
-	              }
-	          }
-	      } catch (ParserConfigurationException | SAXException | IOException e) {
-	          e.printStackTrace();
-	      }
-
+		try {
+			dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(new File(path));
+			doc.getDocumentElement().normalize();
+			NodeList list = doc.getDocumentElement().getChildNodes();
+			for (int temp = 0; temp < list.getLength(); temp++) {
+				Node node = list.item(temp);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {			
+		            Element element = (Element) node;
+		            String name = element.getElementsByTagName("name").item(0).getTextContent();
+		            String type = element.getElementsByTagName("type").item(0).getTextContent();
+		            columnMap.put(name, type);
+		        }
+			}
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+		    e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -64,20 +69,23 @@ public class DowntimesReader implements ExcelReader {
 		
 		FileInputStream file = new FileInputStream(excelFile);
 		Workbook workbook = new XSSFWorkbook(file);
-		EZEnvironment.displayInfoMessage(EZEnvironment.getParentFrame(), "yes");
 		for (int k = 1; k < workbook.getNumberOfSheets(); k++) {
 			Sheet sheet = workbook.getSheetAt(k);
 			HashMap<Integer, String> blueColumns = new HashMap<>();
 			Row headRow = sheet.getRow(0);
 			if (headRow == null)
 				continue;
+			
 			for (Cell cell : headRow) {
 				CellStyle headStyle = cell.getCellStyle();
+				String blueColor = "org.apache.poi.xssf.usermodel.XSSFColor@c6292f46";
 				if (headStyle.getFillForegroundColorColor() == null)
 					break;
-				if (headStyle.getFillForegroundColorColor().toString().equals("org.apache.poi.xssf.usermodel.XSSFColor@c6292f46"))
-					blueColumns.put(cell.getColumnIndex(), getColumnName(cell.getRichStringCellValue().getString().replaceAll("\\s+","")));
+				if (headStyle.getFillForegroundColorColor().toString().equals(blueColor))
+					blueColumns.put(cell.getColumnIndex(), 
+							getColumnName(cell.getRichStringCellValue().getString().replaceAll("\\s+","")));
 			}
+			
 			for (Row row : sheet) {
 				if (row.getRowNum() == 0)
 					continue;
@@ -98,7 +106,6 @@ public class DowntimesReader implements ExcelReader {
 	            		}
 	            		
 		            	if (columnMap.get(blueColumns.get(cell.getColumnIndex())).equals("LatinKey")) {
-		            		
 		            		check = new LatinStringCheck();
 		            	}
 		            		
@@ -120,9 +127,14 @@ public class DowntimesReader implements ExcelReader {
 		            	break;
 		            case BOOLEAN:
 		            	cell.getBooleanCellValue();
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type BOOLEAN");
 		            	break;
 		            case FORMULA:
 		            	cell.getCellFormula();
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type FORMULA");
+		            	break;
+		            default:
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type");
 		            	break;
 					}
 				}

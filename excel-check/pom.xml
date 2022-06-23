@@ -4,6 +4,14 @@
   <artifactId>excel-check</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>excel-check</name>
+  
+  <repositories>
+    <repository>
+        <id>libraries</id>
+        <url>${project.basedir}/src/lib</url>
+    </repository>
+  </repositories>
+  
   <dependencies>
   	<dependency>
 	    <groupId>org.apache.poi</groupId>
@@ -15,7 +23,17 @@
 	    <artifactId>poi-ooxml</artifactId>
 	    <version>5.2.0</version>
 	</dependency>
+	
+	<dependency>
+	    <groupId>com.sample</groupId>
+	    <artifactId>jgaf</artifactId>
+	    <version>2.4.1</version>
+	</dependency>
+	
   </dependencies>
+  
+
+  
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
@@ -34,6 +52,30 @@
           <release>17</release>
         </configuration>
       </plugin>
-    </plugins>
+      
+      <plugin>
+	    <groupId>org.apache.maven.plugins</groupId>
+	    <artifactId>maven-assembly-plugin</artifactId>
+	    <executions>
+	        <execution>
+	            <phase>package</phase>
+	            <goals>
+	                <goal>single</goal>
+	            </goals>
+	            <configuration>
+	                <archive>
+	                <manifest>
+	                	<addClasspath>true</addClasspath>
+	                    <mainClass>gui.Main</mainClass>
+	                </manifest>
+	                </archive>
+	                <descriptorRefs>
+	                    <descriptorRef>jar-with-dependencies</descriptorRef>
+	                </descriptorRefs>
+	            </configuration>
+	        </execution>
+	    </executions>
+	  </plugin>
+	 </plugins>
   </build>
 </project>

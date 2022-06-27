@@ -14,7 +14,7 @@ public class FileImportGUI extends JFrame{
         f = EZFileManager.chooseFileForOpenAction(null, new EZFileFilter("xlsx", "Excel file"));
 	}
 	
-	public String getFileName() {
+	public String getFileName() { 
 		return f.getPath();
 	}
 }

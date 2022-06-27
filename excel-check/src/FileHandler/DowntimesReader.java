@@ -1,8 +1,12 @@
 package FileHandler;
 
 import java.io.File;
+
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.w3c.dom.Document;
@@ -26,46 +30,47 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.plealog.genericapp.api.EZEnvironment;
 
+import DataBaseConnection.DataBaseWriter;
 import FileHandler.CellCheck.CellCheck;
 import FileHandler.CellCheck.LatinStringCheck;
 import FileHandler.CellCheck.StringCellCheck;
+import oracle.ucp.util.Pair;
 
 public class DowntimesReader implements ExcelReader {
 	private File excelFile;
 	private HashMap<String, String> columnMap = new HashMap<>();
-	private String columnSettingsPath = "ExcelColumnSettings/DowntimesTypes.xml";
+	private String columnSettingsPath = "ExcelColumnSettings" + "/" + "DowntimesTypes.xml";
 	
 	public DowntimesReader(String fileName){
 		excelFile = new File(fileName);
-		readColumnSettings(this.getClass().getResource("").getPath() + columnSettingsPath);
+		EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), this.getClass().getPackage().getName() + File.separator + columnSettingsPath);
+		readColumnSettings(this.getClass().getClassLoader().getResourceAsStream(this.getClass().getPackage().getName() + "/" + columnSettingsPath));
 	}
-	/*
-	 * mvn install:install-file -Dfile=C:\Users\los28\git\excel-check\excel-check\libs\jgaf-2.4.1.jar -DgroupId=com.sample -DartifactId=jgaf -Dversion=2.4.1 -Dpackaging=jar
-	 */
-	private void readColumnSettings(String path) {
+	
+	private void readColumnSettings(InputStream path) {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		try {
 			dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(new File(path));
+			Document doc = db.parse(path);
 			doc.getDocumentElement().normalize();
 			NodeList list = doc.getDocumentElement().getChildNodes();
 			for (int temp = 0; temp < list.getLength(); temp++) {
 				Node node = list.item(temp);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {			
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
 		            Element element = (Element) node;
 		            String name = element.getElementsByTagName("name").item(0).getTextContent();
 		            String type = element.getElementsByTagName("type").item(0).getTextContent();
 		            columnMap.put(name, type);
 		        }
 			}
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-		    e.printStackTrace();
+		} catch (Exception e) {
+			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), e.getMessage());
 		}
 	}
-
+	
 	@Override
-	public void read() throws IOException {
+	public void read(DataBaseWriter dbw) throws IOException {
 		
 		FileInputStream file = new FileInputStream(excelFile);
 		Workbook workbook = new XSSFWorkbook(file);
@@ -73,6 +78,13 @@ public class DowntimesReader implements ExcelReader {
 			Sheet sheet = workbook.getSheetAt(k);
 			HashMap<Integer, String> blueColumns = new HashMap<>();
 			Row headRow = sheet.getRow(0);
+			String tableName = getTableName(sheet.getSheetName());
+			
+			if (tableName == null) {
+				EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "Unknown table for sheet " 
+			+ sheet.getSheetName() + " , please check that the table name is written at the end of the line in brackets");
+				continue;
+			}
 			if (headRow == null)
 				continue;
 			
@@ -85,11 +97,10 @@ public class DowntimesReader implements ExcelReader {
 					blueColumns.put(cell.getColumnIndex(), 
 							getColumnName(cell.getRichStringCellValue().getString().replaceAll("\\s+","")));
 			}
-			
 			for (Row row : sheet) {
 				if (row.getRowNum() == 0)
 					continue;
-				StringBuilder strRow = new StringBuilder();
+				ArrayList<Pair<String, String>> rowList = new ArrayList<Pair<String, String>>();
 			    for (Cell cell : row) {
 					if (!blueColumns.containsKey(cell.getColumnIndex()))
 						continue;
@@ -113,16 +124,13 @@ public class DowntimesReader implements ExcelReader {
 		            		check = new StringCellCheck();
 		            	if(!check.checkCell(cell))
 		            		continue;
-		            	strRow.append(cell.getRichStringCellValue().getString());
-		            	strRow.append(';');
+		            	rowList.add(new Pair(blueColumns.get(cell.getColumnIndex()), cell.getRichStringCellValue().getString()));
 		            	break;
 		            case NUMERIC:
 		            	if (DateUtil.isCellDateFormatted(cell)) {
-		            		strRow.append(cell.getDateCellValue());
-			            	strRow.append(';');
+			            	rowList.add(new Pair(blueColumns.get(cell.getColumnIndex()), cell.getDateCellValue()));
 		            	} else {
-		            		strRow.append(cell.getNumericCellValue());
-			            	strRow.append(';');
+		            		rowList.add(new Pair(blueColumns.get(cell.getColumnIndex()), cell.getNumericCellValue()));
 		            	}
 		            	break;
 		            case BOOLEAN:
@@ -138,8 +146,12 @@ public class DowntimesReader implements ExcelReader {
 		            	break;
 					}
 				}
-			    if (!strRow.isEmpty())
- 			    	EZEnvironment.displayInfoMessage(EZEnvironment.getParentFrame(), strRow.toString());
+			    if (!rowList.isEmpty())
+					try {
+						dbw.write(rowList, tableName);
+					} catch (SQLException e) {
+						EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), e.getMessage());
+					}
 			}
 			workbook.close();
 		}
@@ -149,5 +161,15 @@ public class DowntimesReader implements ExcelReader {
 		int slashIndex = cellStr.lastIndexOf("/");
 		String columnName = cellStr.substring(slashIndex + 1);
 		return columnName.replaceAll("\\s+","");
+	}
+	
+	private String getTableName(String sheetName){
+		int openBracketIndex = sheetName.lastIndexOf("(");
+		int closeBracketIndex = sheetName.lastIndexOf(")");
+		if (openBracketIndex == -1 || closeBracketIndex == -1) {
+			return null;
+		}
+		String tablename = sheetName.substring(openBracketIndex + 1, closeBracketIndex);
+		return tablename.replaceAll("\\s+","");
 	}
 }

@@ -43,7 +43,6 @@ public class DefectReader implements ExcelReader {
 	
 	public DefectReader(String fileName){
 		excelFile = new File(fileName);
-		EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), this.getClass().getPackage().getName() + File.separator + columnSettingsPath);
 		readColumnSettings(this.getClass().getClassLoader().getResourceAsStream(this.getClass().getPackage().getName() + "/" + columnSettingsPath));
 	}
 	

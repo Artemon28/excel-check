@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import com.plealog.genericapp.api.EZEnvironment;
+
 import oracle.ucp.util.Pair;
 
 public class DataBaseWriter{
@@ -40,8 +42,7 @@ public class DataBaseWriter{
 			String updateString = makeSQLCommand(tableName, excelRecord);
 			stat.executeUpdate(updateString);
 		} catch(Exception ex){
-            System.out.println("Connection failed...");
-            System.out.println(ex.getMessage());
+			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), ex.getMessage());
         }
 	}
 }

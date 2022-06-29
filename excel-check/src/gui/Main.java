@@ -103,7 +103,6 @@ public class Main {
 
     @Override
     public void preStart() {
-    	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), System.getProperty("java.version"));
     	CopyConfigFiles ccf = new CopyConfigFiles(EZEnvironment.getPreferencesConfigurationFile(), this.getClass().getProtectionDomain().getCodeSource());
     	File sourceFolder = new File(EZEnvironment.getPreferencesConfigurationFile());    	
     	

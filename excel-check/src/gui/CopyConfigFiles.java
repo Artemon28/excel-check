@@ -16,7 +16,7 @@ import com.plealog.genericapp.api.EZEnvironment;
 public class CopyConfigFiles {
 	public CopyConfigFiles(String fromFilename, CodeSource toFolderSource) {
 		InputStream fis4 = null;
-		String packageName = this.getClass().getPackageName();
+		String packageName = this.getClass().getPackage().getName();
 
     	fis4 = this.getClass().getClassLoader().getResourceAsStream(fromFilename);
     	
@@ -42,11 +42,11 @@ public class CopyConfigFiles {
 		    		    if (e == null)
 		    		      break;		    		    
 		    		    String name = e.getName();
-		    		    if (name.startsWith(packageName + File.separator + "conf" + File.separator)) {
+		    		    if (name.startsWith(packageName + "/conf/")) {
 		    		    	File file = new File(name);
 		    		    	if (name.endsWith(".config") && (new File(destDir.resolve(file.getName()).toString()).exists()))
 		    		    		continue;
-		    		    	if (!name.equals(packageName + File.separator + "conf" + File.separator)) {
+		    		    	if (!name.equals(packageName + "/conf/")) {
 		    		    		Files.copy(this.getClass().getClassLoader().getResourceAsStream(file.toPath().toString().replace('\\', '/')), destDir.resolve(file.getName().replace('\\', '/')), StandardCopyOption.REPLACE_EXISTING);
 		    		    	}
 		    		    }

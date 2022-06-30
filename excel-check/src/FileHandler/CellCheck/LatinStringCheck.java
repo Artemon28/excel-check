@@ -4,6 +4,11 @@ import org.apache.poi.ss.usermodel.Cell;
 
 import com.plealog.genericapp.api.EZEnvironment;
 
+/**
+ * checking the correctness of filling in a cell with the latinKey type
+ * @author Chaykov Artemiy
+ *
+ */
 public class LatinStringCheck extends CellCheck{
 	
 	@Override

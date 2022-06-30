@@ -23,6 +23,11 @@ import FileHandler.CellCheck.LatinStringCheck;
 import FileHandler.CellCheck.StringCellCheck;
 import oracle.ucp.util.Pair;
 
+/**
+ * class for reading Downtimes template files
+ * @author Chaykov Artemiy
+ *
+ */
 public class DowntimesReader extends ExcelReaderAbstract {
 	private File excelFile;
 	private HashMap<String, String> columnMap = new HashMap<>();
@@ -33,6 +38,9 @@ public class DowntimesReader extends ExcelReaderAbstract {
 		columnMap = readColumnSettings(this.getClass().getClassLoader().getResourceAsStream(this.getClass().getPackage().getName() + "/" + columnSettingsPath));
 	}
 
+	/**
+	 * reads downtimes excel file. there are may be numeric cells so there are special case in switch for it.
+	 */
 	public void read(DataBaseWriter dbw) throws IOException {
 		FileInputStream file = new FileInputStream(excelFile);
 		Workbook workbook = new XSSFWorkbook(file);

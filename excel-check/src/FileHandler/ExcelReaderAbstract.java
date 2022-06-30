@@ -20,10 +20,25 @@ import com.plealog.genericapp.api.EZEnvironment;
 
 import DataBaseConnection.DataBaseWriter;
 
+/**
+ * Abstract class of reading excel files
+ * @author los28
+ *
+ */
 public abstract class ExcelReaderAbstract {
 	
+	/**
+	 * read file into the database
+	 * @param dbw 
+	 * @throws IOException
+	 */
 	public abstract void read(DataBaseWriter dbw) throws IOException;
 	
+	/**
+	 * prepare column settings before reading for one sheet of excel book
+	 * @param path
+	 * @return
+	 */
 	protected HashMap<String, String> readColumnSettings(InputStream path) {
 		HashMap<String, String> columnMap = new HashMap<>();
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -48,6 +63,11 @@ public abstract class ExcelReaderAbstract {
 		return columnMap;
 	}
 	
+	/**
+	 * Further reading of the columns with only blue header
+	 * @param headRow
+	 * @return map with pairs number of column and the type of words in it
+	 */
 	protected HashMap<Integer, String> getHeadMap(Row headRow){
 		HashMap<Integer, String> blueColumns = new HashMap<>();
 		for (Cell cell : headRow) {
@@ -62,16 +82,22 @@ public abstract class ExcelReaderAbstract {
 		return blueColumns;
 	}
 	
-	protected String readCell(Cell cell) {
-		return null;
-	}
-	
+	/**
+	 * parser of the column name
+	 * @param cellStr
+	 * @return return name of the column in database. It should be written after slash /
+	 */
 	protected String getColumnName(String cellStr) {
 		int slashIndex = cellStr.lastIndexOf("/");
 		String columnName = cellStr.substring(slashIndex + 1);
 		return columnName.replaceAll("\\s+","");
 	}
 	
+	/**
+	 * parser of the table name
+	 * @param sheetName
+	 * @return return name of the table name. It should be written in the brackets ()
+	 */
 	protected String getTableName(String sheetName){
 		int openBracketIndex = sheetName.lastIndexOf("(");
 		int closeBracketIndex = sheetName.lastIndexOf(")");

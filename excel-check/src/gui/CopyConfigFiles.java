@@ -12,7 +12,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.plealog.genericapp.api.EZEnvironment;
-
+/**
+ * class that check if there are folder with DB configuration data, otherwise it create this folder with null data in it.
+ * @author Chaykov Artemiy
+ *
+ */
 public class CopyConfigFiles {
 	public CopyConfigFiles(String fromFilename, CodeSource toFolderSource) {
 		InputStream fis4 = null;

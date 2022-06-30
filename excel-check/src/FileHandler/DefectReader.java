@@ -36,6 +36,11 @@ import FileHandler.CellCheck.LatinStringCheck;
 import FileHandler.CellCheck.StringCellCheck;
 import oracle.ucp.util.Pair;
 
+/**
+ * class for reading Defects template files
+ * @author Chaykov Artemiy
+ *
+ */
 public class DefectReader extends ExcelReaderAbstract {
 	private File excelFile;
 	private HashMap<String, String> columnMap = new HashMap<>();
@@ -46,6 +51,9 @@ public class DefectReader extends ExcelReaderAbstract {
 		columnMap = readColumnSettings(this.getClass().getClassLoader().getResourceAsStream(this.getClass().getPackage().getName() + "/" + columnSettingsPath));
 	}
 
+	/**
+	 * reads basic excel book with only strings in cell
+	 */
 	public void read(DataBaseWriter dbw) throws IOException {
 		FileInputStream file = new FileInputStream(excelFile);
 		Workbook workbook = new XSSFWorkbook(file);

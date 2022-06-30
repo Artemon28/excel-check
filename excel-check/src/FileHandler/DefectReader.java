@@ -36,49 +36,23 @@ import FileHandler.CellCheck.LatinStringCheck;
 import FileHandler.CellCheck.StringCellCheck;
 import oracle.ucp.util.Pair;
 
-public class DefectReader implements ExcelReader {
+public class DefectReader extends ExcelReaderAbstract {
 	private File excelFile;
 	private HashMap<String, String> columnMap = new HashMap<>();
 	private String columnSettingsPath = "ExcelColumnSettings" + "/" + "DefectTypes.xml";
 	
 	public DefectReader(String fileName){
 		excelFile = new File(fileName);
-		readColumnSettings(this.getClass().getClassLoader().getResourceAsStream(this.getClass().getPackage().getName() + "/" + columnSettingsPath));
+		columnMap = readColumnSettings(this.getClass().getClassLoader().getResourceAsStream(this.getClass().getPackage().getName() + "/" + columnSettingsPath));
 	}
-	
-	private void readColumnSettings(InputStream path) {
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		try {
-			dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(path);
-			doc.getDocumentElement().normalize();
-			NodeList list = doc.getDocumentElement().getChildNodes();
-			for (int temp = 0; temp < list.getLength(); temp++) {
-				Node node = list.item(temp);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-		            Element element = (Element) node;
-		            String name = element.getElementsByTagName("name").item(0).getTextContent();
-		            String type = element.getElementsByTagName("type").item(0).getTextContent();
-		            columnMap.put(name, type);
-		        }
-			}
-		} catch (Exception e) {
-			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), e.getMessage());
-		}
-	}
-	
-	@Override
+
 	public void read(DataBaseWriter dbw) throws IOException {
-		
 		FileInputStream file = new FileInputStream(excelFile);
 		Workbook workbook = new XSSFWorkbook(file);
 		for (int k = 1; k < workbook.getNumberOfSheets(); k++) {
 			Sheet sheet = workbook.getSheetAt(k);
-			HashMap<Integer, String> blueColumns = new HashMap<>();
 			Row headRow = sheet.getRow(0);
 			String tableName = getTableName(sheet.getSheetName());
-			
 			if (tableName == null) {
 				EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "Unknown table for sheet " 
 			+ sheet.getSheetName() + " , please check that the table name is written at the end of the line in brackets");
@@ -87,61 +61,40 @@ public class DefectReader implements ExcelReader {
 			if (headRow == null)
 				continue;
 			
-			for (Cell cell : headRow) {
-				CellStyle headStyle = cell.getCellStyle();
-				String blueColor = "org.apache.poi.xssf.usermodel.XSSFColor@c6292f46";
-				if (headStyle.getFillForegroundColorColor() == null)
-					break;
-				if (headStyle.getFillForegroundColorColor().toString().equals(blueColor))
-					blueColumns.put(cell.getColumnIndex(), 
-							getColumnName(cell.getRichStringCellValue().getString().replaceAll("\\s+","")));
-			}
+			HashMap<Integer, String> blueColumns = new HashMap<>();
+			blueColumns = getHeadMap(headRow);
+			
+			
 			for (Row row : sheet) {
 				if (row.getRowNum() == 0)
 					continue;
+				
 				ArrayList<Pair<String, String>> rowList = new ArrayList<Pair<String, String>>();
 			    for (Cell cell : row) {
-					if (!blueColumns.containsKey(cell.getColumnIndex()))
+					if (!blueColumns.containsKey(cell.getColumnIndex()) || cell == null)
 						continue;
-					if (cell == null)
-						continue;
+					if (!columnMap.containsKey(blueColumns.get(cell.getColumnIndex()))) {
+            			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "no such column like: " +
+            		blueColumns.get(cell.getColumnIndex()) +
+            		" in the xml file. Please check name of column or add this column to xml file");
+            			continue;
+            		}
+					
 					switch (cell.getCellType()) {
 		            case STRING:
 		            	CellCheck check;
-	            		if (!columnMap.containsKey(blueColumns.get(cell.getColumnIndex()))) {
-	            			EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "no such column like: " +
-	            		blueColumns.get(cell.getColumnIndex()) +
-	            		" in the xml file. Please check name of column or add this column to xml file");
-	            			break;
-	            		}
-	            		
-		            	if (columnMap.get(blueColumns.get(cell.getColumnIndex())).equals("LatinKey")) {
+		            	if (columnMap.get(blueColumns.get(cell.getColumnIndex())).equals("LatinKey"))
 		            		check = new LatinStringCheck();
-		            	}
-		            		
 		            	else
 		            		check = new StringCellCheck();
+		            	
 		            	if(!check.checkCell(cell))
 		            		continue;
+		            	
 		            	rowList.add(new Pair(blueColumns.get(cell.getColumnIndex()), cell.getRichStringCellValue().getString()));
 		            	break;
-		            case NUMERIC:
-		            	if (DateUtil.isCellDateFormatted(cell)) {
-			            	rowList.add(new Pair(blueColumns.get(cell.getColumnIndex()), cell.getDateCellValue()));
-		            	} else {
-		            		rowList.add(new Pair(blueColumns.get(cell.getColumnIndex()), cell.getNumericCellValue()));
-		            	}
-		            	break;
-		            case BOOLEAN:
-		            	cell.getBooleanCellValue();
-		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type BOOLEAN");
-		            	break;
-		            case FORMULA:
-		            	cell.getCellFormula();
-		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type FORMULA");
-		            	break;
 		            default:
-		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown type");
+		            	EZEnvironment.displayErrorMessage(EZEnvironment.getParentFrame(), "unknown cell type: " + cell.getCellType() + " for Defects table");
 		            	break;
 					}
 				}
@@ -154,21 +107,5 @@ public class DefectReader implements ExcelReader {
 			}
 			workbook.close();
 		}
-	}
-	
-	private String getColumnName(String cellStr) {
-		int slashIndex = cellStr.lastIndexOf("/");
-		String columnName = cellStr.substring(slashIndex + 1);
-		return columnName.replaceAll("\\s+","");
-	}
-	
-	private String getTableName(String sheetName){
-		int openBracketIndex = sheetName.lastIndexOf("(");
-		int closeBracketIndex = sheetName.lastIndexOf(")");
-		if (openBracketIndex == -1 || closeBracketIndex == -1) {
-			return null;
-		}
-		String tablename = sheetName.substring(openBracketIndex + 1, closeBracketIndex);
-		return tablename.replaceAll("\\s+","");
 	}
 }

@@ -4,31 +4,17 @@ import FileHandler.DefectReader;
 
 
 import FileHandler.DowntimesReader;
-import FileHandler.ExcelReader;
+import FileHandler.ExcelReaderAbstract;
 import FileHandler.FileImportGUI;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.security.CodeSource;
-import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -140,7 +126,7 @@ public class Main {
       }
       else if (event.getPropertyName().equals("Defect")) {
     	  FileImportGUI fileImportGUI = new FileImportGUI();
-    	  ExcelReader excelReader = new DefectReader(fileImportGUI.getFileName());
+    	  ExcelReaderAbstract excelReader = new DefectReader(fileImportGUI.getFileName());
     	  DataBaseWriter dataBaseWriter = new DataBaseWriter();
     	  dataBaseWriter.setDBParams(DataBaseConfigReader.getHost(), DataBaseConfigReader.getName(), DataBaseConfigReader.getPassword());
     	  try {
@@ -151,7 +137,7 @@ public class Main {
       }
       else if (event.getPropertyName().equals("Downtimes")) {
     	  FileImportGUI fileImportGUI = new FileImportGUI();
-    	  ExcelReader excelReader = new DowntimesReader(fileImportGUI.getFileName());
+    	  ExcelReaderAbstract excelReader = new DowntimesReader(fileImportGUI.getFileName());
     	  DataBaseWriter dataBaseWriter = new DataBaseWriter();
     	  dataBaseWriter.setDBParams(DataBaseConfigReader.getHost(), DataBaseConfigReader.getName(), DataBaseConfigReader.getPassword());
     	  try {

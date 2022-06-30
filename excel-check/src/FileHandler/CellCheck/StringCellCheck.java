@@ -4,7 +4,7 @@ import org.apache.poi.ss.usermodel.Cell;
 
 import com.plealog.genericapp.api.EZEnvironment;
 
-public class StringCellCheck implements CellCheck{
+public class StringCellCheck extends CellCheck{
 	
 	@Override
 	public boolean checkCell(Cell cell) {
